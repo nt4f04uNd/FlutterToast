@@ -2,17 +2,23 @@ package io.github.ponnamkarthik.toast.fluttertoast
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.AssetManager
 import android.graphics.PorterDuff
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
+import io.flutter.FlutterInjector
+import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import kotlin.Exception
+import io.flutter.view.FlutterMain
+import java.io.File
+
 
 internal class MethodCallHandlerImpl(var context: Context) : MethodCallHandler {
 
@@ -26,7 +32,8 @@ internal class MethodCallHandlerImpl(var context: Context) : MethodCallHandler {
                 val gravity = call.argument<Any>("gravity").toString()
                 val bgcolor = call.argument<Number>("bgcolor")
                 val textcolor = call.argument<Number>("textcolor")
-                val textSize = call.argument<Number>("fontSize")
+                val fontSize = call.argument<Number>("fontSize")
+                val fontasset = call.argument<String>("fontasset")
                 val mGravity: Int
 
                 mGravity = when (gravity) {
@@ -34,7 +41,7 @@ internal class MethodCallHandlerImpl(var context: Context) : MethodCallHandler {
                     "center" -> Gravity.CENTER
                     else -> Gravity.BOTTOM
                 }
-                
+
                 val mDuration: Int
                 mDuration = if (length == "long") {
                     Toast.LENGTH_LONG
@@ -47,42 +54,48 @@ internal class MethodCallHandlerImpl(var context: Context) : MethodCallHandler {
                     val text = layout.findViewById<TextView>(R.id.text)
                     text.text = mMessage
 
+
                     val gradientDrawable: Drawable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         context.getDrawable(R.drawable.corner)!!
                     } else {
                         context.resources.getDrawable(R.drawable.corner)
                     }
-                    if(bgcolor != null) {
-                        gradientDrawable.setColorFilter(bgcolor.toInt(), PorterDuff.Mode.SRC_IN)
-                    }
+                    gradientDrawable.setColorFilter(bgcolor.toInt(), PorterDuff.Mode.SRC_IN)
                     text.background = gradientDrawable
-                    if(textSize != null) {
-                        text.textSize = textSize.toFloat()
+                    if (fontSize != null) {
+                        text.textSize = fontSize.toFloat()
                     }
-                    if(textcolor != null) {
+                    if (textcolor != null) {
                         text.setTextColor(textcolor.toInt())
                     }
                     mToast = Toast(context)
                     mToast.duration = mDuration
+
+                    if (fontasset != null) {
+                        val assetManager: AssetManager = context.assets
+                        val key = FlutterMain.getLookupKeyForAsset(fontasset)
+                        text.typeface = Typeface.createFromAsset(assetManager, key);
+                    }
                     mToast.view = layout
                 } else {
                     mToast = Toast.makeText(context, mMessage, mDuration)
-                    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                        try {
-                            val textView: TextView = mToast.view!!.findViewById(android.R.id.message)
-                            if(textSize != null) {
-                                textView.textSize = textSize.toFloat()
-                            }
-                            if (textcolor != null) {
-                                textView.setTextColor(textcolor.toInt())
-                            }
-                        } catch(e: Exception) {
-                            
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                        val textView: TextView = mToast.view!!.findViewById(android.R.id.message)
+                        if (fontSize != null) {
+                            textView.textSize = fontSize.toFloat()
+                        }
+                        if (textcolor != null) {
+                            textView.setTextColor(textcolor.toInt())
+                        }
+                        if (fontasset != null) {
+                            val assetManager: AssetManager = context.assets
+                            val key = FlutterMain.getLookupKeyForAsset(fontasset)
+                            textView.typeface = Typeface.createFromAsset(assetManager, key);
                         }
                     }
                 }
 
-                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
                     when (mGravity) {
                         Gravity.CENTER -> {
                             mToast.setGravity(mGravity, 0, 0)
