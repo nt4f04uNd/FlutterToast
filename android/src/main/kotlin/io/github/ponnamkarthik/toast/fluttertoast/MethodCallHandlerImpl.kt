@@ -80,7 +80,7 @@ internal class MethodCallHandlerImpl(private var context: Context) : MethodCallH
                 } else {
                     mToast = Toast.makeText(context, mMessage, mDuration)
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                        val textView: TextView = mToast.view!!.findViewById(android.R.id.message)
+                        val textView: TextView = mToast?.view!!.findViewById(android.R.id.message)
                         if (fontSize != null) {
                             textView.textSize = fontSize.toFloat()
                         }
